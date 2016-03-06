@@ -12,6 +12,9 @@ public class TestGrey extends Application {
     @Override
     public void start(Stage primaryStage) {
         DayNightTerminator map = DayNightTerminator.greyscale();
+        map.addMapSelectionListener((lat,lon)->System.out.println(lat+","+lon));
+        map.setSelectIndicatorCrosshairs(10);
+        map.setStrokeWidthPixels(1);
         long t0 = System.currentTimeMillis();
         long dt = 20*24*60*60*1000; // 20 days
         Slider slider = new Slider(t0-dt,t0+dt,t0);

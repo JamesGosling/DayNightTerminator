@@ -1,7 +1,12 @@
 /*
  * Copyright © 2011,2015 Liquid Robotics
  * Licensed under Apache 2.0 https://github.com/JamesGosling/DayNightTerminator/blob/master/LICENSE
- * Created by James Gosling, based on the following matlab code:
+ * In the test directory (src/test/java/com/liquidr/daynightterminator) you'll
+ * find two main programs: TestColor.java and TestGrey.java.  Run either of them to
+ * see a test run of this Node, and a slider to move back and forth in time.
+ * 
+ * Created by James Gosling, based on the matlab code from
+ * http://caia.swin.edu.au/mapping/gametraffic/anim100309A/plotdaynightterminator.m
  * 
  * 
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -73,25 +78,51 @@ package com.nighthacks.fx.daynightterminator;
 
 import static java.lang.Math.*;
 import java.util.*;
+import java.util.concurrent.*;
 import javafx.collections.*;
+import javafx.geometry.*;
+import javafx.scene.*;
 import javafx.scene.image.*;
+import javafx.scene.input.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.*;
 import javafx.scene.shape.*;
 import javafx.scene.transform.*;
 
+/**
+ * DayNightTerminator is a JavaFX Node that draws a simple map of the world with
+ * an indication of what parts of the map are in daylight, and which parts are dark.
+ * It's designed to be useable as a small course whole-world pop-up over other FX Nodes
+ * to allow approximate location selection.
+ * 
+ * Based on some matlab code by Mattia Rossi &lt;mrossi@swin.edu.au&gt; of
+ * Swinburn University
+ */
 public class DayNightTerminator extends AnchorPane {
+    /**
+     * @return a DayNightTerminator that uses colorful maps based on NASA's
+     * Blue Marble imagery
+     */
     public static DayNightTerminator colorful() {
         return new DayNightTerminator(
                 DayNightTerminator.class.getResource("night.png").toString(), 
                 DayNightTerminator.class.getResource("day.jpg").toString());
     }
+    /**
+     * @return a DayNightTerminator that uses somewhat subdued grey-scale world maps
+     */
     public static DayNightTerminator greyscale() {
         return new DayNightTerminator(
                 DayNightTerminator.class.getResource("nightGrey.png").toString(), 
                 DayNightTerminator.class.getResource("dayGrey.png").toString());
     }
-    //DayNightTerminator.class.getResource("night.jpg").toString()
-    // DayNightTerminator.class.getResource("day.jpg").toString()
+    /**
+     * Creates a DayNightTerminator based on day and night images of your
+     * choosing.
+     * 
+     * @param dayImageURL   URL of the image to be used for the daylit parts of the map
+     * @param nightImageURL URL of the image to be used for the nighttime parts of the map
+     */
     public DayNightTerminator(String dayImageURL, String nightImageURL) {
         dayImage = new ImageView(dayImageURL);
         nightImage = new ImageView(nightImageURL);
@@ -115,8 +146,53 @@ public class DayNightTerminator extends AnchorPane {
 //        nightImage.setOpacity(1);
         getChildren().add(dayImage);
         getChildren().add(nightImage);
+        setOnMousePressed((l)->select(l));
+        setOnMouseDragged((l)->select(l));
+        setOnMouseReleased((l)->select(l));
         setTime(t);
     }
+    private void select(MouseEvent me) {
+        CopyOnWriteArrayList<MapSelectionListener> l = listeners;
+        if(l!=null) {
+            final double latitude = 90-me.getY();
+            final double longitude = me.getX()-180;
+            select(latitude, longitude);
+                l.forEach((msl)->msl.locationSelected(latitude, longitude));
+        }
+    }
+    private CopyOnWriteArrayList<MapSelectionListener> listeners;
+    /**
+     * Add a listener for UI events that select a point on the map.
+     * @param msl listener to be informed on a mouse click
+     */
+    public void addMapSelectionListener(MapSelectionListener msl) {
+        if(listeners==null) listeners = new CopyOnWriteArrayList<>();
+        listeners.add(msl);
+    }
+
+    /**
+     *
+     * @param msl listener to no longer be informed on a mouse click
+     */
+    public void removeMapSelectionListener(MapSelectionListener msl) {
+        if(listeners!=null) {
+            listeners.remove(msl);
+            if(listeners.isEmpty()) listeners = null;
+        }
+    }
+
+    public interface MapSelectionListener {
+
+        /**
+         * @param latitude selected point on globe
+         * @param longitude selected point on globe
+         */
+        public void locationSelected(double latitude, double longitude);
+    }
+    /**
+     * Sets the time being displayed as day/night indications on the map.
+     * @param t time that the day/night division should correspond too
+     */
     public final void setTime(long t) {
         if (abs(t - displayedTime) < 2 * 60 * 1000)
             return; // Don't bother with small changes
@@ -130,8 +206,8 @@ public class DayNightTerminator extends AnchorPane {
         }
         final double inyear = yearfraction(t);
         double y = inyear >= vernalEquinox && inyear <= autumnalEquinox
-                   ? 180
-                   : 0;
+                   ? 0
+                   : 180;
         c1[pos++] = len - 1.;
         c1[pos++] = y;
         c1[pos++] = 0.;
@@ -141,9 +217,15 @@ public class DayNightTerminator extends AnchorPane {
     }
 
     private static double[] computeDayNightTerminator(long t) {
-        final double jd2 = t / (double) (1000 * 60 * 60 * 24);
-        final double juliandate = jd2 + 2440587.500000; //2440802.101097234;
+        // The nice thing about the java time standard is that converting it
+        // to a julian date is trivial - unlike the gyrations the original
+        // matlab code had to go through to convert the y/n/d/h/m/s parameters
+        final double julianDate1970 = t / (double) (1000 * 60 * 60 * 24);
+        // convert from the unix epoch to the astronomical epoch
+        // (noon on January 1, 4713 BC, GMT/UT) (the .5 is noon versus midnight)
+        final double juliandate = julianDate1970 + 2440587.500000;
         final double K = PI / 180;
+        // here be dragons!
         final double T = (juliandate - 2451545.0) / 36525;
         double L = 280.46645 + 36000.76983 * T + 0.0003032 * T * T;
         L = L % 360;
@@ -182,12 +264,91 @@ public class DayNightTerminator extends AnchorPane {
             coords[i] = atan(cos((i - 180 + tau) * K) / tan(dec * K)) / K + 90;
         return coords;
     }
+    /**
+     * Select(highlight) the given lat/lon pair on the map.
+     * @param latitude coordinate to be highlighted
+     * @param longitude coordinate to be highlighted
+     */
+    public void select(double latitude, double longitude) {
+        // Very conveniently :-) the coordinate system inside the anchorpane is
+        // Lat/lon degrees
+        if(highlight==null) setSelectIndicatorCircle(5);
+        highlight.setTranslateX(longitude+180);
+        highlight.setTranslateY(90-latitude);
+    }
     private void setTransform() {
         ObservableList<Transform> xforms = getTransforms();
         if (prevTransform != null) xforms.remove(prevTransform);
         xforms.add(prevTransform = new Scale(
                 widthProperty().doubleValue() / 360,
                 heightProperty().doubleValue() / 180));
+        if(highlight instanceof Shape && strokeWidthPixels>0) {
+            Point2D p = getLocalToParentTransform().deltaTransform(new Point2D(1, 1));
+            ((Shape)highlight).setStrokeWidth(strokeWidthPixels/max(p.getX(),p.getY()));
+        }
+    }
+    private double strokeWidthPixels = 2;
+    /**
+     * If the selection indicator is a Shape, this will cause it's stroke width
+     * to be set in pixels, and *not* scale with the rest of the map.  The
+     * default behavior is setStrokeWidthPixels(2)
+     * @param w stroke width in pixels
+     * @return this
+     */
+    public DayNightTerminator setStrokeWidthPixels(double w) {
+        if(w != strokeWidthPixels) {
+            strokeWidthPixels = w;
+            setTransform();
+        }
+        return this;
+    }
+    /**
+     * Set the indicator to be used when a lat/lon pair is selected.
+     * This Node will have its 0,0 point translated to the selected lat/lon.
+     * @param n node to overlay and position on map
+     * @return this
+     */
+    public DayNightTerminator setSelectIndicator(Node n) {
+        if(n != highlight) {
+            if(highlight!=null)
+                getChildren().remove(highlight);
+            if(n!=null)
+                getChildren().add(n);
+            highlight = n;
+        }
+        return this;
+    }
+    /**
+     * Set the indicator to be used when a lat/lon pair is selected
+     * to a circle of radius r degrees.  setSelectIndicatorCircle(5) is the default
+     * behavior.
+     * @param r radius of circle
+     * @return this
+     */
+    public DayNightTerminator setSelectIndicatorCircle(double r) {
+        Circle c = new Circle(0,0,r);
+        c.setStroke(Color.BLACK);
+        c.setStrokeWidth(2);
+        c.setFill(null);
+        return setSelectIndicator(c);
+    }
+    /**
+     * Set the indicator to be used when a lat/lon pair is selected
+     * to cross-hairs that extend r degrees from the selected point.
+     * @param r radius of cross-hairs
+     * @return this
+     */
+    public DayNightTerminator setSelectIndicatorCrosshairs(double r) {
+        Path p = new Path(
+                new MoveTo(-r, 0),
+                new LineTo(r,0),
+                new MoveTo(0,-r),
+                new LineTo(0,r)
+        );
+        p.setStroke(Color.BLACK);
+        p.setStrokeWidth(2);
+        p.setFill(null);
+        return setSelectIndicator(p);
     }
     private static double yearfraction(long t) {
         double y = t / (365.2425 * 24 * 60 * 60 * 1000);  // fractional years since the epoch
@@ -200,4 +361,5 @@ public class DayNightTerminator extends AnchorPane {
     private Transform prevTransform = null;
     private long displayedTime = 0;
     private final ImageView nightImage, dayImage;
+    private Node highlight;
 }
