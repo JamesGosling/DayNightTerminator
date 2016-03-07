@@ -5,6 +5,9 @@ deploy:
   provider: releases
   api_key:
     secure: j3V6DcUPZQW2ttthkAAQD6/JP9fj3kDUyQ3S3zbrs2M8nPo6NkUIDl4tPlzc2FKIXYrkHczx1g367avhODlu3DINIavYr9ofaJQO/vlIEaO+qeIFsUIV7gRz0xEmS4Bm0QtEm5Lny6tNw0eL+h7I9vwFZF9xfqd8Cp6fmmlScK2igH4b8Wps+YrvBz/3ikzpQj1Qq8I3oZSfhf+oGhHl0sFdb09yBpjAyvnrbiVtc5TqYMmsJ7wzvX52A5prxxdKAc2TBDfMGXSUKHbp/pnzJG9nTKPcgiy0IXGi+QC4aOpP98ciUYJg+FUlOpnF3V3OqjGUQmMCw1Yr3wNZKMu8Mzd9wE++mXI6OqUToeiBZlQ7eFNRe/zhsRpKyB99l96AiASxwkddU0/M6Wo2Cha8arrK+6XN2hMNR47kTsBGCVEeeclFUcsW40JPWKrzr+ZAxwGq3XuBcG3TDnYdAiSF7kpAs/HA3dm20RggWQVKTfgiEGmcpohuvNxS5tWKEbpW1hhKOosSyYbiIf+RGuAi3CpUmJL/1eIzAHkwKhf9giHtBUGEQD51Ilnx6o/fQqKPFKjAyL/5Y3UZWO0sweMM/mWus9Y1+DpJYwrmCd7YX7ujrCpsvXGJeg26v2KidNX6y+oTSeWyw/x2QCavKAYwtGYOF/P2iEAGqpPBp7AgCLc=
-  file: target/DayNightTerminator-1.0-RELEASE.jar
+#  file: DayNightTerminator-1.0-RELEASE.jar
+#  file: DayNightTerminator-1.0-RELEASE.pom
+  file: /home/travis/.m2/repository/com/nighthacks/DayNightTerminator/1.0-RELEASE/DayNightTerminator-1.0-RELEASE.jar
+  file: /home/travis/.m2/repository/com/nighthacks/DayNightTerminator/1.0-RELEASE/DayNightTerminator-1.0-RELEASE.pom
   on:
     repo: JamesGosling/DayNightTerminator
