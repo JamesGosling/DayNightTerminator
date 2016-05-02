@@ -12,3 +12,10 @@ deploy:
   on:
     repo: JamesGosling/DayNightTerminator
     tags: true
+env:
+  global:
+    - SONATYPE_USERNAME=jag@nighthacks.com
+    - secure: "LXH5AX8kYsOAg94QzCEnxwS+aNowJ6WVd/7nxRhCr/9+q7RyOFQy8mBMHahBMHIgtsrw8/fp/oR78Ou/IGUvdQhMVRvclG+p9ij2UuRAGMrRih8abeZvHoo9m5eVLAxMd/ZfKKdF2piogCiFncko/YzayamNS49//0qskIXFAPhpt1JFeil4kDRRsFe4AJK2KviwvMOEt4Qr1CRrgnL1OyZ/BaniaFGx4ZUrPABUAb+wHwGIE+qV19PcZIDtlmST1haUtFoSMFD1OHzZ/S39oHsTY5N8KXvoZbiVhB5C4138IzNPE16TfbFTfQWfUFApOiJrljfmU7zJGDXecukcarC5gl9TTniAEn0/30yM0vjPgzPofSSqAd2yoaxW9W0KUK8WwLXydvBHkIJu33tII5OHnBOLM1EvIIdRvbliXWIgJnd+rqAY3d0Sd8847EqFI8dD0zrwUpxDCE0In7jMtU8GPhomaypyHOEo/wLgJKo9MxAgpJIFtWDR6OMkLsWiXTcMkGCUNMbZ8tAr7CPMJkfx46dYRpGly4Rdy8SYv78K2bO48Aj3N0BXNef7QjjX8wLQqCcCtXYx9yUGWDysp4otz0KGvv24EU8cHFYifuF8a7xfH8cYw3+/KtsjhuRIOnCHD8zT/kWldkJmIDps3nbiiWUb5YBvu5YmHUc56ak="
+after_success:
+  - python addServer.py
+  - mvn clean deploy --settings ~/.m2/mySettings.xml
