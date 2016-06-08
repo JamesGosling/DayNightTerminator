@@ -283,6 +283,8 @@ public class DayNightTerminator extends AnchorPane {
                 widthProperty().doubleValue() / 360,
                 heightProperty().doubleValue() / 180));
         if(highlight instanceof Shape && strokeWidthPixels>0) {
+            /* Normally, stroke widths scale with the transform.  But we don't
+             * want this, so we tweak the width so that it cancels out. */
             Point2D p = getLocalToParentTransform().deltaTransform(new Point2D(1, 1));
             ((Shape)highlight).setStrokeWidth(strokeWidthPixels/max(p.getX(),p.getY()));
         }
